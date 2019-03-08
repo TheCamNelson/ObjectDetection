@@ -2,16 +2,18 @@ import numpy as np
 import cv2
 
 def objectDetection():
-    classes = ["Background", "Airplane", "Bike", "Bird", "Boat", "Bottle", "Bus", "Car", "Cat", "Chain", "Cow",
-               "Dining Table", "Dog", "Horse", "Motorbike", "Person", "Plant", "Sheep", "Sofa", "Train", "TV / Monitor"]
+    classes = ["Background", "Airplane", "Bike", "Bird", "Boat", "Bottle", "Bus", "Car", "Cat", "Chair", "Cow",
+               "Table", "Dog", "Horse", "Motorbike", "Person", "Plant", "Sheep", "Sofa", "Train", "TV / Monitor"]
     colors = np.random.uniform(0, 255, size=(len(classes), 3))
     net = cv2.dnn.readNetFromCaffe("model/MobileNetSSD_deploy.prototxt.txt", 'model/MobileNetSSD_deploy.caffemodel')
 
     video_capture = cv2.VideoCapture(0)
+    print('Opening video feed...(Press q to close)')
 
     while True:
         # if the `q` is pressed, break from the loop
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            print('Closing video feed...')
             break
         # Capture frame-by-frame
         # ret: signals if you have run out of frames; for video file use only
@@ -25,10 +27,9 @@ def objectDetection():
         detections = net.forward()
 
         for i in np.arange(0, detections.shape[2]):
-            # extract the confidence (i.e., probability) associated with the prediction
+            # extract the confidence associated with the prediction and filter out weak detectio
             confidence = detections[0, 0, i, 2]
-            # filter out weak detections
-            if confidence > 0.5:
+            if confidence > 0.35:
                 # extract the index of the class label from the
                 # `detections`, then compute the (x, y)-coordinates of
                 # the bounding box for the object
@@ -40,7 +41,7 @@ def objectDetection():
                 label = "{} ({:.2f}%)".format(classes[index],confidence * 100)
                 cv2.rectangle(frame, (startX, startY), (endX, endY),colors[index], 2)
                 y = startY - 15 if startY - 15 > 15 else startY + 15
-                cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[index], 2)
+                cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[index], 1, cv2.LINE_AA)
 
         # Display the resulting frame
         cv2.imshow('Object Detection', frame)
